@@ -2,15 +2,17 @@ import React, { useEffect } from 'react';
 import axios from 'axios';
 import { useHistory } from 'react-router-dom';
 
-
-
 const Logout = () => {
   const history = useHistory();
 
   useEffect(() => {
     const logout = async () => {
       try {
-        await axios.get('https://dvisual-deployment-server.vercel.app/logout');
+        // Clear the token from localStorage
+        localStorage.removeItem('token');
+        // Remove the Authorization header for Axios
+        delete axios.defaults.headers.common['Authorization'];
+        // Redirect to the login page
         history.push('/login');
       } catch (error) {
         console.error('Logout error:', error);
