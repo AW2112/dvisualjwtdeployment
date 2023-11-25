@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useHistory } from 'react-router-dom';
 import axios from 'axios';
 
-
-
 const Login = () => {
   const [user, setUser] = useState({
     email: '',
@@ -12,16 +10,21 @@ const Login = () => {
 
   const [show, setShow] = useState(false);
   const [msg, setMsg] = useState('');
-  const [initialRequestsMade, setInitialRequestsMade] = useState(false); // Track initial requests
   const history = useHistory();
 
   const onSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://dvisual-deployment-server.vercel.app/login', user);
+      const response = await axios.post('http://localhost:8000/login', user);
       setShow(response.data.login);
       if (response.data.msg) {
         setMsg(response.data.msg);
+      }
+      // If login is successful, you can store the token in localStorage
+      if (response.data.login) {
+        const token = response.data.token;
+        localStorage.setItem('token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
     } catch (error) {
       console.error('Error during login:', error);
@@ -33,26 +36,6 @@ const Login = () => {
       history.push('/profile');
     }
   }, [show, history]);
-
-  axios.defaults.withCredentials = true;
-
-  useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        if (!initialRequestsMade) {
-          // Only make the initial requests if they haven't been made yet
-          const response = await axios.get('https://dvisual-deployment-server.vercel.app/login');
-          if (response.data.user) {
-            history.push('/profile');
-          }
-          setInitialRequestsMade(true); // Set the flag to true after the initial requests
-        }
-      } catch (error) {
-        console.error('Error during initial requests:', error);
-      }
-    };
-    checkLogin();
-  }, [history, initialRequestsMade]);
 
   const userInput = (event) => {
     const { name, value } = event.target;
