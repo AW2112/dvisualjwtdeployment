@@ -17,7 +17,7 @@ const Login = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    let response = await axios.post('https://dvisual-deployment.vercel.app/login', user, { withCredentials: true });
+    let response = await axios.post('https://dvisual-deployment-server.vercel.app', user, { withCredentials: true });
     setShow(response.data.login);
     if (response.data.msg) {
       setMsg(response.data.msg);
@@ -34,7 +34,7 @@ const Login = () => {
 
   useEffect(() => {
     const checkLogin = async () => {
-      let response = await axios.get('https://dvisual-deployment.vercel.app/login');
+      let response = await axios.get('https://dvisual-deployment-server.vercel.app/login');
       if (response.data.user) {
         history.push('/profile');
       }
