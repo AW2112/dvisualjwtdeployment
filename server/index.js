@@ -140,10 +140,15 @@ app.post('/login', async (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-  if (req.session.user) {
-    return res.send({ login: true, user: req.session.user });
-  } else {
-    return res.send({ login: false });
+  try {
+    if (req.session && req.session.user) {
+      return res.send({ login: true, user: req.session.user });
+    } else {
+      return res.send({ login: false });
+    }
+  } catch (error) {
+    console.error('Error in /login:', error);
+    return res.status(500).send({ login: false, error: 'Internal Server Error' });
   }
 });
 
