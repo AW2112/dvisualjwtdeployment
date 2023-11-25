@@ -12,15 +12,19 @@ const Login = () => {
 
   const [show, setShow] = useState(false);
   const [msg, setMsg] = useState('');
-
+  const [initialRequestsMade, setInitialRequestsMade] = useState(false); // Track initial requests
   const history = useHistory();
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    let response = await axios.post('https://dvisual-deployment-server.vercel.app/login', user);
-    setShow(response.data.login);
-    if (response.data.msg) {
-      setMsg(response.data.msg);
+    try {
+      const response = await axios.post('https://dvisual-deployment-server.vercel.app/login', user);
+      setShow(response.data.login);
+      if (response.data.msg) {
+        setMsg(response.data.msg);
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
     }
   };
 
@@ -34,13 +38,21 @@ const Login = () => {
 
   useEffect(() => {
     const checkLogin = async () => {
-      let response = await axios.get('https://dvisual-deployment-server.vercel.app/login');
-      if (response.data.user) {
-        history.push('/profile');
+      try {
+        if (!initialRequestsMade) {
+          // Only make the initial requests if they haven't been made yet
+          const response = await axios.get('https://dvisual-deployment-server.vercel.app/login');
+          if (response.data.user) {
+            history.push('/profile');
+          }
+          setInitialRequestsMade(true); // Set the flag to true after the initial requests
+        }
+      } catch (error) {
+        console.error('Error during initial requests:', error);
       }
     };
     checkLogin();
-  }, [history]);
+  }, [history, initialRequestsMade]);
 
   const userInput = (event) => {
     const { name, value } = event.target;
