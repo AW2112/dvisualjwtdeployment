@@ -10,7 +10,7 @@ const Logout = () => {
   useEffect(() => {
     const logout = async () => {
       try {
-        await axios.get('https://dvisual-deployment.vercel.app/logout');
+        await axios.get('https://dvisual-deployment-server.vercel.app/logout');
         history.push('/login');
       } catch (error) {
         console.error('Logout error:', error);
