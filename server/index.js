@@ -13,7 +13,7 @@ const BaseURL = process.env.URL || '';
 const app = express();
 
 app.use(cors({
-    origin: 'https://dvisual-deployment-5ask.vercel.app',
+    origin: 'https://dvisual-five.vercel.app',
     credentials: true,
 }));
 app.use(express.json());
