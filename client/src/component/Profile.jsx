@@ -18,18 +18,18 @@ const Profile = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const loginResponse = await axios.get('https://dvisual-deployment.vercel.app/login');
+        const loginResponse = await axios.get('https://dvisual-deployment-server.vercel.app/login');
         setLogin(loginResponse.data.login);
 
         if (loginResponse.data.user) {
           setEmail(loginResponse.data.user[0].email);
 
           // Fetch organization name
-          const organizationResponse = await axios.get(`https://dvisual-deployment.vercel.app/organization/${loginResponse.data.user[0].id}`);
+          const organizationResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/organization/${loginResponse.data.user[0].id}`);
           setOrganizationName(organizationResponse.data.organizationname);
 
           // Fetch the list of sites for the logged-in user's organization
-          const sitesResponse = await axios.get(`https://dvisual-deployment.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
+          const sitesResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
           setSites(sitesResponse.data.sites);
         } else {
           history.push('/login');
@@ -45,13 +45,13 @@ const Profile = () => {
   const handleAddSite = async () => {
     try {
       // Fetch the logged-in user's data
-      const loginResponse = await axios.get('https://dvisual-deployment.vercel.app/login');
+      const loginResponse = await axios.get('https://dvisual-deployment-server.vercel.app/login');
       if (!loginResponse.data.user) {
         history.push('/login');
         return;
       }
 
-      const response = await axios.post('https://dvisual-deployment.vercel.app/add-site', {
+      const response = await axios.post('https://dvisual-deployment-server.vercel.app/add-site', {
         organisation_id: loginResponse.data.user[0].organisation_id,
         site_name: siteName,
         site_location: siteLocation,
@@ -63,7 +63,7 @@ const Profile = () => {
         setSiteLocation('');
         setError('');
         // Fetch the updated list of sites and update the state accordingly
-        const updatedSitesResponse = await axios.get(`https://dvisual-deployment.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
+        const updatedSitesResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
         setSites(updatedSitesResponse.data.sites);
       } else {
         setError(response.data.error);
