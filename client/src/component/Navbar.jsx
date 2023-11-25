@@ -7,19 +7,7 @@ const Navbar = () => {
   const [login, setLogin] = useState(false);
   const [forceRender, setForceRender] = useState(false);
   axios.defaults.withCredentials = true;
-  useEffect(() => {
-    const checkLogin = async () => {
-      try {
-        const response = await axios.get('https://dvisual-deployment-server.vercel.app/login');
-        setLogin(response.data.login);
-        setForceRender(prev => !prev); // Force a re-render
-      } catch (error) {
-        console.error('Error checking login status:', error);
-      }
-    };
-  
-    checkLogin();
-  }, [forceRender]); // Re-run the effect when forceRender changes
+ // Re-run the effect when forceRender changes
 
   return (
     <>
