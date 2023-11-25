@@ -1,11 +1,9 @@
 const express = require('express');
 const mysql = require('mysql');
-const cors = require("cors");
+const cors = require('cors');
 const bcrypt = require('bcrypt');
-const bodyParser = require("body-parser");
-const cookieparser = require("cookie-parser");
-const session = require("express-session");
-const saltRounds = 10;
+const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
 const PORT = process.env.PORT || 8000;
@@ -13,30 +11,22 @@ const BaseURL = process.env.URL || '';
 const app = express();
 
 app.use(cors({
-    origin: 'https://dvisual-five.vercel.app',
-    credentials: true,
+  origin: 'https://dvisual-five.vercel.app',
+  credentials: true,
 }));
 app.use(express.json());
-app.use(cookieparser());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session({
-    key: "userId",
-    secret: "your-secret-key",
-    resave: true,
-    saveUninitialized: true,
-    store: new session.MemoryStore(),
-}));
 
 const db = mysql.createConnection({
-    host: 'database-1.caoacq3ev5m0.eu-north-1.rds.amazonaws.com',
-    user: 'abdullah',
-    password: 'abdullah-w-21',
-    database: 'dvisual'
-})
+  host: 'database-1.caoacq3ev5m0.eu-north-1.rds.amazonaws.com',
+  user: 'abdullah',
+  password: 'abdullah-w-21',
+  database: 'dvisual'
+});
 
-app.get("/", (req, res) => {
-    res.send("hi");
-})
+app.get('/', (req, res) => {
+  res.send('hi');
+});
 
 app.post("/register", (req, res) => {
     const email = req.body.email;
@@ -124,8 +114,6 @@ app.post("/register", (req, res) => {
 });
 
 
-
-
 app.post('/login', (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -134,117 +122,117 @@ app.post('/login', (req, res) => {
   db.query(sql, (err, result) => {
     if (err) {
       console.log(err);
-      return res.send({ msg: 'Error while retrieving user information' });
+      return res.status(500).json({ msg: 'Error while retrieving user information' });
     }
     if (result.length > 0) {
       bcrypt.compare(password, result[0].password, (err, response) => {
         if (response) {
-          req.session.user = result;
-          return res.send({ login: true, useremail: email });
+          const user = result[0];
+          const token = jwt.sign({ userId: user.id, email: user.email }, 'your-secret-key', { expiresIn: '1h' });
+          return res.json({ login: true, useremail: email, token });
         } else {
-          return res.send({ login: false, msg: 'Wrong Password' });
+          return res.json({ login: false, msg: 'Wrong Password' });
         }
       });
     } else {
-      return res.send({ login: false, msg: 'User Email Not Exists' });
+      return res.json({ login: false, msg: 'User Email Not Exists' });
     }
   });
 });
 
-app.get('/login', (req, res) => {
-  console.log('Session user:', req.session.user); // Log session user
-  if (req.session.user) {
-    return res.send({ login: true, user: req.session.user });
-  } else {
-    return res.send({ login: false });
-  }
-});
+// Update the '/organization' endpoint to use JWT for authentication
+app.get('/organization', authenticateToken, (req, res) => {
+  const userId = req.decoded.userId;
 
-app.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
+  // Query the database to get the organization name based on userId
+  const sql = 'SELECT o.organisationname FROM users u JOIN organizations o ON u.organisation_id = o.organisation_id WHERE u.id = ?';
+
+  db.query(sql, [userId], (err, result) => {
     if (err) {
-      console.error('Logout error:', err);
-      return res.status(500).json({ success: false, message: 'Logout failed' });
-    }
-
-    res.clearCookie('connect.sid');
-
-    res.status(200).json({ success: true, message: 'Logout successful' });
-  });
-});
-
-  app.get('/organization/:userId', (req, res) => {
-    const userId = req.params.userId;
-  
-    // Query the database to get the organization name based on userId
-    const sql = 'SELECT o.organisationname FROM users u JOIN organizations o ON u.organisation_id = o.organisation_id WHERE u.id = ?';
-  
-    db.query(sql, [userId], (err, result) => {
-      if (err) {
-        console.error('Error fetching organization data:', err);
-        res.status(500).json({ error: 'Internal Server Error' });
+      console.error('Error fetching organization data:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } else {
+      if (result.length > 0) {
+        const organizationname = result[0].organisationname;
+        res.json({ organizationname });
       } else {
-        if (result.length > 0) {
-          const organizationname = result[0].organisationname;
-          res.json({ organizationname });
-        } else {
-          res.status(404).json({ error: 'Organization not found' });
-        }
+        res.status(404).json({ error: 'Organization not found' });
       }
-    });
-  });
-
-
-  app.post('/add-site', (req, res) => {
-    const siteName = req.body.site_name;
-    const siteLocation = req.body.site_location;
-    //console.log(req.session.user[0]);
-  //console.log(req.body);
-    
-    // Fetch the logged-in user's data
-    const userId = req.session.user[0].id; // Assuming you store user ID in the session
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
     }
-  
-    const organizationId =   req.session.user[0].organisation_id;
-  
-      
-      const siteId = uuidv4();
-  
-      // Insert the new site into the sites table
-      const insertSiteSql = "INSERT INTO sites (site_id, organisation_id, site_name, site_location) VALUES (?, ?, ?, ?)";
-      db.query(insertSiteSql, [siteId, organizationId, siteName, siteLocation], (siteErr, siteResult) => {
-        if (siteErr) {
-          console.error('Error adding site:', siteErr);
-          return res.status(500).json({ error: 'Internal Server Error' });
-        }
-  
-        return res.status(200).json({ success: true, siteId });
-      });
-    });
-  
-  
- 
-app.get('/sites/:organizationId', (req, res) => {
-  const organizationId = req.params.organizationId;
+  });
+});
 
-  // Replace this with your database query to fetch sites based on organization ID
-  const getSitesSql = 'SELECT * FROM sites WHERE organisation_id = ?';
-  db.query(getSitesSql, [organizationId], (err, result) => {
-    if (err) {
-      console.error('Error fetching sites:', err);
+// Update the '/add-site' endpoint to use JWT for authentication
+app.post('/add-site', authenticateToken, (req, res) => {
+  const userId = req.decoded.userId;
+
+  const siteName = req.body.site_name;
+  const siteLocation = req.body.site_location;
+
+  // Fetch the organizationId based on userId
+  const getOrganizationIdSql = 'SELECT organisation_id FROM users WHERE id = ?';
+  db.query(getOrganizationIdSql, [userId], (orgErr, orgResult) => {
+    if (orgErr) {
+      console.error('Error fetching organization ID:', orgErr);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
 
-    return res.status(200).json({ sites: result });
+    if (orgResult.length === 0) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    const organizationId = orgResult[0].organisation_id;
+    const siteId = uuidv4();
+
+    // Insert the new site into the sites table
+    const insertSiteSql = 'INSERT INTO sites (site_id, organisation_id, site_name, site_location) VALUES (?, ?, ?, ?)';
+    db.query(insertSiteSql, [siteId, organizationId, siteName, siteLocation], (siteErr, siteResult) => {
+      if (siteErr) {
+        console.error('Error adding site:', siteErr);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      return res.status(200).json({ success: true, siteId });
+    });
   });
 });
 
-app.get('/sensors/:siteId', (req, res) => {
-  const siteId = req.params.siteId;
-  //console.log('Requested siteId:', siteId);
+// Update the '/sites/:organizationId' endpoint to use JWT for authentication
+app.get('/sites', authenticateToken, (req, res) => {
+  const userId = req.decoded.userId;
 
+  // Fetch the organizationId based on userId
+  const getOrganizationIdSql = 'SELECT organisation_id FROM users WHERE id = ?';
+  db.query(getOrganizationIdSql, [userId], (orgErr, orgResult) => {
+    if (orgErr) {
+      console.error('Error fetching organization ID:', orgErr);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
+    if (orgResult.length === 0) {
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+
+    const organizationId = orgResult[0].organisation_id;
+
+    // Replace this with your database query to fetch sites based on organization ID
+    const getSitesSql = 'SELECT * FROM sites WHERE organisation_id = ?';
+    db.query(getSitesSql, [organizationId], (err, result) => {
+      if (err) {
+        console.error('Error fetching sites:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      return res.status(200).json({ sites: result });
+    });
+  });
+});
+
+// Update the '/sensors/:siteId' endpoint to use JWT for authentication
+app.get('/sensors/:siteId', authenticateToken, (req, res) => {
+  const siteId = req.params.siteId;
+
+  // Replace this with your database query to fetch sensor names based on site ID
   const getSensorNamesSql = 'SELECT sensorname FROM master WHERE site_id = ?';
   db.query(getSensorNamesSql, [siteId], (err, result) => {
     if (err) {
@@ -253,14 +241,12 @@ app.get('/sensors/:siteId', (req, res) => {
     }
 
     const sensorNames = result.map((row) => row.sensorname);
-    //console.log('Retrieved sensor names:', sensorNames);
-
     return res.status(200).json({ sensorNames });
   });
 });
 
-
-app.get('/sensor-data/:sensorName/:siteId', (req, res) => {
+// Update the '/sensor-data/:sensorName/:siteId' endpoint to use JWT for authentication
+app.get('/sensor-data/:sensorName/:siteId', authenticateToken, (req, res) => {
   const sensorName = req.params.sensorName;
   const siteId = req.params.siteId;
 
@@ -286,7 +272,6 @@ app.get('/sensor-data/:sensorName/:siteId', (req, res) => {
         return res.status(500).json({ error: 'Internal Server Error' });
       }
 
-      // Transform the data if needed
       const sensorData = result.map((row) => ({
         date: row.date,
         time: row.time,
@@ -298,8 +283,23 @@ app.get('/sensor-data/:sensorName/:siteId', (req, res) => {
   });
 });
 
+// Middleware to authenticate requests using JWT
+function authenticateToken(req, res, next) {
+  const token = req.headers['authorization'];
 
+  if (!token) {
+    return res.sendStatus(401);
+  }
+
+  jwt.verify(token, 'your-secret-key', (err, decoded) => {
+    if (err) {
+      return res.sendStatus(403);
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 
 app.listen(PORT, () => {
-    console.log(`App running on port ${PORT}`);
+  console.log(`App running on port ${PORT}`);
 });
