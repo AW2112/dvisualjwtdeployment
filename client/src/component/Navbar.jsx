@@ -10,7 +10,7 @@ const Navbar = () => {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        const response = await axios.get('https://dvisual-deployment.vercel.app/login');
+        const response = await axios.get('https://dvisual-deployment-server.vercel.app/login');
         setLogin(response.data.login);
         setForceRender(prev => !prev); // Force a re-render
       } catch (error) {
