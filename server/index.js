@@ -126,51 +126,51 @@ app.post("/register", (req, res) => {
 
 
 app.post('/login', (req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
+  const email = req.body.email;
+  const password = req.body.password;
 
-    let sql = `SELECT * FROM users WHERE email='${email}'`;
-    db.query(sql, (err, result) => {
-        if (err) {
-            console.log(err);
-            return res.send({ msg: "Error while retrieving user information" });
-        }
-        if (result.length > 0) {
-            bcrypt.compare(password, result[0].password, (err, response) => {
-                if (response) {
-                    req.session.user = result;
-                    return res.send({ login: true, useremail: email });
-                } else {
-                    return res.send({ login: false, msg: "Wrong Password" });
-                }
-            });
+  let sql = `SELECT * FROM users WHERE email='${email}'`;
+  db.query(sql, (err, result) => {
+    if (err) {
+      console.log(err);
+      return res.send({ msg: 'Error while retrieving user information' });
+    }
+    if (result.length > 0) {
+      bcrypt.compare(password, result[0].password, (err, response) => {
+        if (response) {
+          req.session.user = result;
+          return res.send({ login: true, useremail: email });
         } else {
-            return res.send({ login: false, msg: "User Email Not Exists" });
+          return res.send({ login: false, msg: 'Wrong Password' });
         }
-    });
+      });
+    } else {
+      return res.send({ login: false, msg: 'User Email Not Exists' });
+    }
+  });
 });
 
-
 app.get('/login', (req, res) => {
-    if (req.session.user) {
-        return res.send({ login: true, user: req.session.user });
-    } else {
-        return res.send({ login: false });
-    }
+  console.log('Session user:', req.session.user); // Log session user
+  if (req.session.user) {
+    return res.send({ login: true, user: req.session.user });
+  } else {
+    return res.send({ login: false });
+  }
 });
 
 app.get('/logout', (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Logout error:', err);
-        return res.status(500).json({ success: false, message: 'Logout failed' });
-      }
-  
-      res.clearCookie('connect.sid');
-  
-      res.status(200).json({ success: true, message: 'Logout successful' });
-    });
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Logout error:', err);
+      return res.status(500).json({ success: false, message: 'Logout failed' });
+    }
+
+    res.clearCookie('connect.sid');
+
+    res.status(200).json({ success: true, message: 'Logout successful' });
   });
+});
 
   app.get('/organization/:userId', (req, res) => {
     const userId = req.params.userId;
