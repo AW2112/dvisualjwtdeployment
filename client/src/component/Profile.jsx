@@ -15,32 +15,32 @@ const Profile = () => {
   const history = useHistory();
   axios.defaults.withCredentials = true;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const loginResponse = await axios.get('https://dvisual-deployment-server.vercel.app/login');
-        setLogin(loginResponse.data.login);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const loginResponse = await axios.get('https://dvisual-deployment-server.vercel.app/login');
+      setLogin(loginResponse.data.login);
 
-        if (loginResponse.data.user) {
-          setEmail(loginResponse.data.user[0].email);
+      if (loginResponse.data.user) {
+        setEmail(loginResponse.data.user[0].email);
 
-          // Fetch organization name
-          const organizationResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/organization/${loginResponse.data.user[0].id}`);
-          setOrganizationName(organizationResponse.data.organizationname);
+        // Fetch organization name
+        const organizationResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/organization/${loginResponse.data.user[0].id}`);
+        setOrganizationName(organizationResponse.data.organizationname);
 
-          // Fetch the list of sites for the logged-in user's organization
-          const sitesResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
-          setSites(sitesResponse.data.sites);
-        } else {
-          history.push('/login');
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
+        // Fetch the list of sites for the logged-in user's organization
+        const sitesResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
+        setSites(sitesResponse.data.sites);
+      } else {
+        history.push('/login');
       }
-    };
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
-    fetchData();
-  }, [history]);
+  fetchData();
+}, []);
 
   const handleAddSite = async () => {
     try {
