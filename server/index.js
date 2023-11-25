@@ -19,12 +19,17 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieparser());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(session({
-    key: "userId",
-    secret: "abdullah",
+app.use(
+  session({
+    key: 'userId',
+    secret: 'abdullah',
     resave: true,
     saveUninitialized: true,
-}))
+    cookie: {
+      secure: true,
+    },
+  })
+);
 
 const db = mysql.createConnection({
     host: 'database-1.caoacq3ev5m0.eu-north-1.rds.amazonaws.com',
