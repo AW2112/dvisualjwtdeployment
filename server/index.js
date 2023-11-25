@@ -300,6 +300,12 @@ function authenticateToken(req, res, next) {
   });
 }
 
+app.get('/user', authenticateToken, (req, res) => {
+  // The user information is available in req.decoded
+  res.json({ success: true, user: req.decoded });
+});
+
+
 app.listen(PORT, () => {
   console.log(`App running on port ${PORT}`);
 });
