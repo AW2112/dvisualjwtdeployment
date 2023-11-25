@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import axios from 'axios';
-
 
 const Navbar = () => {
-  const [login, setLogin] = useState(false);
-  const [forceRender, setForceRender] = useState(false);
-  axios.defaults.withCredentials = true;
- // Re-run the effect when forceRender changes
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check if a JWT token is present in local storage
+    const token = localStorage.getItem('jwtToken');
+
+    if (token) {
+      // You can perform additional JWT validation here if needed
+      // For simplicity, we'll just assume that if a token is present, the user is logged in
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   return (
     <>
@@ -28,22 +34,20 @@ const Navbar = () => {
             <span className="navbar-toggler-icon"></span>
           </button>
           <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav ml-auto ">
-              <li className="nav-item active">
+            <ul className="navbar-nav ml-auto">
+              <li className="nav-item">
                 <NavLink to="/" className="nav-link">
                   Home
                 </NavLink>
               </li>
-              <li className="nav-item active">
-                {!login ? (
-                  <>
-                    <NavLink to="/login" className="nav-link">
-                      Login
-                    </NavLink>
-                  </>
-                ) : (
+              <li className="nav-item">
+                {isLoggedIn ? (
                   <NavLink to="/logout" className="nav-link">
-                    LogOut
+                    Logout
+                  </NavLink>
+                ) : (
+                  <NavLink to="/login" className="nav-link">
+                    Login
                   </NavLink>
                 )}
               </li>
@@ -56,4 +60,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
