@@ -11,33 +11,33 @@ const Profile = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch user information using the new /user endpoint
-        const userResponse = await axios.get('https://dvisual-deployment-server.vercel.app/user');
-        if (userResponse.data.success) {
-          setLogin(true);
-          setEmail(userResponse.data.user.email);
+  const fetchData = async () => {
+  try {
+    // Fetch user information using the new /user endpoint
+    const userResponse = await axios.get('https://dvisual-deployment-server.vercel.app/user');
+    if (userResponse.data.success) {
+      setLogin(true);
+      setEmail(userResponse.data.user.email);
 
-          // Fetch organization name
-          const organizationResponse = await axios.get(
-            `https://dvisual-deployment-server.vercel.app/organization/${userResponse.data.user.id}`
-          );
-          setOrganizationName(organizationResponse.data.organizationname);
+      // Fetch organization name
+      const organizationResponse = await axios.get(
+        `https://dvisual-deployment-server.vercel.app/organization/${userResponse.data.user.id}`
+      );
+      setOrganizationName(organizationResponse.data.organizationname);
 
-          // Fetch the list of sites for the logged-in user's organization
-          const sitesResponse = await axios.get(
-            `https://dvisual-deployment-server.vercel.app/sites/${userResponse.data.user.organisation_id}`
-          );
-          setSites(sitesResponse.data.sites);
-        } else {
-          // Redirect to login if the user is not authenticated
-          history.push('/login');
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Internal Server Error');
-      }
+      // Fetch the list of sites for the logged-in user's organization
+      const sitesResponse = await axios.get(
+        `https://dvisual-deployment-server.vercel.app/sites/${userResponse.data.user.organisation_id}`
+      );
+      setSites(sitesResponse.data.sites);
+    } else {
+      // Redirect to login if the user is not authenticated
+      history.push('/login');
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    setError('Internal Server Error');
+  }
     };
 
     fetchData();
