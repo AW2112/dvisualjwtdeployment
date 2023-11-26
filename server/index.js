@@ -150,14 +150,14 @@ app.get('/organization', authenticateToken, (req, res) => {
   db.query(sql, [userId], (err, result) => {
     if (err) {
       console.error('Error fetching organization data:', err);
-      res.status(500).json({ error: 'Internal Server Error' });
+      return res.status(500).json({ success: false, error: 'Internal Server Error' });
+    }
+
+    if (result.length > 0) {
+      const organizationname = result[0].organisationname;
+      return res.status(200).json({ success: true, organizationname });
     } else {
-      if (result.length > 0) {
-        const organizationname = result[0].organisationname;
-        res.json({ organizationname });
-      } else {
-        res.status(404).json({ error: 'Organization not found' });
-      }
+      return res.status(404).json({ success: false, error: 'Organization not found' });
     }
   });
 });
