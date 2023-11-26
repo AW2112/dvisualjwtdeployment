@@ -2,77 +2,46 @@ import React, { useState, useEffect } from 'react';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 
-
 const Profile = () => {
   const [email, setEmail] = useState('');
   const [organizationName, setOrganizationName] = useState('');
   const [login, setLogin] = useState(false);
-  const [siteName, setSiteName] = useState('');
-  const [siteLocation, setSiteLocation] = useState('');
-  const [error, setError] = useState('');
-  const [showAddSiteForm, setShowAddSiteForm] = useState(false);
   const [sites, setSites] = useState([]);
   const history = useHistory();
-  axios.defaults.withCredentials = true;
+  const [error, setError] = useState('');
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const loginResponse = await axios.get('https://dvisual-deployment-server.vercel.app/login');
-      setLogin(loginResponse.data.login);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch user information using the new /user endpoint
+        const userResponse = await axios.get('https://dvisual-deployment-server.vercel.app/user');
+        if (userResponse.data.success) {
+          setLogin(true);
+          setEmail(userResponse.data.user.email);
 
-      if (loginResponse.data.user) {
-        setEmail(loginResponse.data.user[0].email);
+          // Fetch organization name
+          const organizationResponse = await axios.get(
+            `https://dvisual-deployment-server.vercel.app/organization/${userResponse.data.user.id}`
+          );
+          setOrganizationName(organizationResponse.data.organizationname);
 
-        // Fetch organization name
-        const organizationResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/organization/${loginResponse.data.user[0].id}`);
-        setOrganizationName(organizationResponse.data.organizationname);
-
-        // Fetch the list of sites for the logged-in user's organization
-        const sitesResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
-        setSites(sitesResponse.data.sites);
-      } else {
-        history.push('/login');
+          // Fetch the list of sites for the logged-in user's organization
+          const sitesResponse = await axios.get(
+            `https://dvisual-deployment-server.vercel.app/sites/${userResponse.data.user.organisation_id}`
+          );
+          setSites(sitesResponse.data.sites);
+        } else {
+          // Redirect to login if the user is not authenticated
+          history.push('/login');
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Internal Server Error');
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
+    };
 
-  fetchData();
-}, []);
-
-  const handleAddSite = async () => {
-    try {
-      // Fetch the logged-in user's data
-      const loginResponse = await axios.get('https://dvisual-deployment-server.vercel.app/login');
-      if (!loginResponse.data.user) {
-        history.push('/login');
-        return;
-      }
-
-      const response = await axios.post('https://dvisual-deployment-server.vercel.app/add-site', {
-        organisation_id: loginResponse.data.user[0].organisation_id,
-        site_name: siteName,
-        site_location: siteLocation,
-      }, { withCredentials: true });
-
-      if (response.data.success) {
-        setShowAddSiteForm(false);
-        setSiteName('');
-        setSiteLocation('');
-        setError('');
-        // Fetch the updated list of sites and update the state accordingly
-        const updatedSitesResponse = await axios.get(`https://dvisual-deployment-server.vercel.app/sites/${loginResponse.data.user[0].organisation_id}`);
-        setSites(updatedSitesResponse.data.sites);
-      } else {
-        setError(response.data.error);
-      }
-    } catch (error) {
-      console.error('Error adding site:', error);
-      setError('Internal Server Error');
-    }
-  };
+    fetchData();
+  }, [history]);
 
   const handleSiteButtonClick = (siteId) => {
     history.push(`/visualize/${siteId}`);
@@ -80,7 +49,6 @@ useEffect(() => {
 
   return (
     <>
-      
       <section
         style={{
           backgroundColor: '#1a1a1a',
@@ -89,77 +57,18 @@ useEffect(() => {
           height: '90vh',
         }}
       >
-        {/* <div className="box">
-          <p>Email: {login ? email : null}</p>
-          <p>Organization Name: {organizationName}</p>
-        </div> */}
-
         <div className="sitedabba container-xxl">
           {sites.map((site) => (
             <div class="added-button" key={site.site_id} onClick={() => handleSiteButtonClick(site.site_id)}>
               {site.site_name} - {site.site_location}
             </div>
           ))}
-          {/* {showAddSiteForm ? (
-            <>
-              <div>
-                <label>Site Name:</label>
-                <input
-                  type="text"
-                  value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label>Site Location:</label>
-                <input
-                  type="text"
-                  value={siteLocation}
-                  onChange={(e) => setSiteLocation(e.target.value)}
-                />
-              </div>
-              <button onClick={handleAddSite}>Add Site</button>
-              <button onClick={() => setShowAddSiteForm(false)}>Cancel</button>
-            </>
-          ) : (
-            <button onClick={() => setShowAddSiteForm(true)}>Add Site</button>
-          )} */}
         </div>
-        {showAddSiteForm ? (
-            <>
-            <div class="afterbutton">
-            <div>
-                <label class="sitename-label">Site Name:</label>
-                <input
-                  type="text"
-                  value={siteName}
-                  onChange={(e) => setSiteName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label class="sitelocation-label">Site Location:</label>
-                <input
-                  type="text"
-                  value={siteLocation}
-                  onChange={(e) => setSiteLocation(e.target.value)}
-                />
-                <button  onClick={handleAddSite}>Add Site</button>
-                <button onClick={() => setShowAddSiteForm(false)}>Cancel</button>
-              </div>
-
-            </div>
-           
-            </>
-          ) : (
-            <button class="mysitebutton" onClick={() => setShowAddSiteForm(true)}>Add Site</button>
-          )}
-           <div className="box">
+        <div className="box">
           <p>Email: {login ? email : null}</p>
           <p>Organization Name: {organizationName}</p>
-        </div> 
-
+        </div>
       </section>
-
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </>
   );
